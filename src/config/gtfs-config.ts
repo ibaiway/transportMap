@@ -1,4 +1,4 @@
-import { Config, importGtfs } from "gtfs"
+import { Config } from "gtfs"
 
 const gtfsConfig: Config = {
   sqlitePath: "./db/gtfs.db",
