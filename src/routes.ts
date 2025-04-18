@@ -1,4 +1,6 @@
 import { Router } from "express"
+import cors from "cors"
+
 import {
   closeDb,
   getStoptimes,
@@ -13,6 +15,13 @@ import { handleGetRoutes } from "./controllers/routes-controller.ts"
 import { handleLiveStops } from "./controllers/sse-controller.ts"
 
 const router = Router()
+
+router.use(
+  cors({
+    origin: "*", // allow all origins in development
+    credentials: true, // if you're using cookies or authentication
+  })
+)
 
 router.get("/import", async (req, res) => {
   await importGtfs(gtfsConfig)
