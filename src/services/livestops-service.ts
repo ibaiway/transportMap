@@ -19,12 +19,18 @@ export function getLiveStops(stopId: string) {
     hour12: false,
   })
 
-  // Get scheduled stoptimes for next hour
+  // Get time 30 minutes ago to catch delayed buses
+  const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000)
+  const startTime = thirtyMinutesAgo.toLocaleTimeString("en-US", {
+    hour12: false,
+  })
+
+  // Get scheduled stoptimes for next hour, including buses from 30 minutes ago
   const stoptimes = getStoptimes(
     {
       stop_id: stopId,
       date: currentDate,
-      start_time: currentTime,
+      start_time: startTime, // Changed from currentTime to startTime
       end_time: endTime,
     },
     ["trip_id", "arrival_time", "departure_time", "stop_sequence", "stop_id"],
@@ -44,15 +50,12 @@ export function getLiveStops(stopId: string) {
     undefined,
     { db: db }
   )
-  console.log("UPDATES: ", updates)
 
   // Create lookup of updates by trip_id
   const updatesByTripId = updates.reduce((acc, update) => {
     acc[update.trip_id] = update
     return acc
   }, {})
-
-  console.log("UPDATES BY TRIP ID: ", updatesByTripId)
 
   // Enhance stoptimes with route and realtime information
   const enhancedStoptimes = stoptimes.map((stoptime) => {
@@ -121,6 +124,52 @@ export function getLiveStops(stopId: string) {
     }
   })
 
+  // Filter out buses that have already departed (accounting for delays)
+  const filteredStoptimes = enhancedStoptimes.filter((stoptime) => {
+    // If we have delay information, use the adjusted departure time
+    if (stoptime.delay && stoptime.delay.adjusted_departure_time) {
+      const [hours, minutes, seconds] =
+        stoptime.delay.adjusted_departure_time.split(":")
+      const adjustedDepartureDate = new Date(
+        0,
+        0,
+        0,
+        parseInt(hours),
+        parseInt(minutes),
+        parseInt(seconds)
+      )
+      const currentTimeDate = new Date(
+        0,
+        0,
+        0,
+        now.getHours(),
+        now.getMinutes(),
+        now.getSeconds()
+      )
+      return adjustedDepartureDate >= currentTimeDate
+    }
+
+    // Otherwise use the scheduled departure time
+    const [hours, minutes, seconds] = stoptime.departure_time.split(":")
+    const departureDate = new Date(
+      0,
+      0,
+      0,
+      parseInt(hours),
+      parseInt(minutes),
+      parseInt(seconds)
+    )
+    const currentTimeDate = new Date(
+      0,
+      0,
+      0,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds()
+    )
+    return departureDate >= currentTimeDate
+  })
+
   closeDb(db)
-  return enhancedStoptimes
+  return filteredStoptimes
 }
