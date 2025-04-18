@@ -14,3 +14,15 @@ export function handleGetStops(req: Request, res: Response) {
   closeDb(db)
   res.send(stops)
 }
+export function handleGetStopById(req: Request, res: Response) {
+  const db = openDb(gtfsConfig)
+  const stopId = req.params.stopId
+  const stops = getStops(
+    { stop_id: stopId }, // Query filter
+    ["stop_id", "stop_name"], // Fields to return
+    undefined, // No sorting needed
+    { db: db } // Database connection
+  )
+  closeDb(db)
+  res.send(stops[0]) // Only return the first stop found
+}

@@ -10,7 +10,10 @@ import {
   updateGtfsRealtime,
 } from "gtfs"
 import { gtfsConfig } from "./config/gtfs-config.ts"
-import { handleGetStops } from "./controllers/stops-controller.ts"
+import {
+  handleGetStopById,
+  handleGetStops,
+} from "./controllers/stops-controller.ts"
 import { handleGetRoutes } from "./controllers/routes-controller.ts"
 import { handleLiveStops } from "./controllers/sse-controller.ts"
 
@@ -34,6 +37,8 @@ router.get("/import-rt", async (req, res) => {
 })
 
 router.get("/stops", handleGetStops)
+
+router.get("/stops/:stopId", handleGetStopById)
 
 router.get("/routes", handleGetRoutes)
 
