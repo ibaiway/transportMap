@@ -137,3 +137,5 @@ dist
 
 # Ignore db folder
 db/
+
+.DS_Store
